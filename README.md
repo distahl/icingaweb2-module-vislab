@@ -12,3 +12,9 @@ Please read the following chapters for more insights on this module:
 
 
 ![detailview](doc/img/detailview.png)
+
+For convinience this module includes the following javascript libraries bundled with microbundle (MIT):
+* chartjs (MIT)
+* chartjs-plugin-zoom (MIT)
+* hammer.js (MIT)
+  
