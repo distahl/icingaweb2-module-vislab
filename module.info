@@ -1,0 +1,5 @@
+Name: vislab
+Version: 0.9.9
+
+Description: vislab
+ This module provides a extendable interface for rendering timeseries based performance data

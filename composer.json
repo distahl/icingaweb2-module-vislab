@@ -1,0 +1,21 @@
+{
+  "name": "moreamazingnick/vislab",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Nicolas",
+      "email": "email@example.com"
+    }
+  ],
+  "require": {
+    "influxdata/influxdb-client-php":"^3.2",
+    "influxdb/influxdb-php": "^1.15"
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  }
+}
