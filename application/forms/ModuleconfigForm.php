@@ -66,6 +66,23 @@ class ModuleconfigForm extends ConfigForm
             ]
         );
 
+        $this->addElement('text', 'settings_hook_max_width_value', [
+            'label' => $this->translate('Hook max width (value)'),
+            'description' => $this->translate(
+                'Maximum width of the graph container on host/service detail view (hook only, not dashlets). Value is in percent or pixels depending on unit.'
+            ),
+            'required' => false,
+            'value' => 100,
+            'validators' => [['Between', false, ['min' => 1, 'max' => 9999]]]
+        ]);
+        $this->addElement('select', 'settings_hook_max_width_unit', [
+            'label' => $this->translate('Hook max width (unit)'),
+            'description' => $this->translate('Unit for the hook max width value.'),
+            'required' => true,
+            'multiOptions' => ['percent' => $this->translate('Percent'), 'pixel' => $this->translate('Pixel')],
+            'value' => 'percent'
+        ]);
+
 
 
 
@@ -82,6 +99,13 @@ class ModuleconfigForm extends ConfigForm
         if ($dashboardEl && $this->config->hasSection('settings')) {
             $raw = $this->config->getSection('settings')->get('dashboardbackend', DashboardBackendHelper::DEFAULT_BACKEND);
             $dashboardEl->setValue(DashboardBackendHelper::parse($raw));
+        }
+        if ($this->config->hasSection('settings')) {
+            $s = $this->config->getSection('settings');
+            $v = $this->getElement('settings_hook_max_width_value');
+            if ($v !== null) $v->setValue($s->get('hook_max_width_value', 100));
+            $u = $this->getElement('settings_hook_max_width_unit');
+            if ($u !== null) $u->setValue($s->get('hook_max_width_unit', 'percent'));
         }
     }
 

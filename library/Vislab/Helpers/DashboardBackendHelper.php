@@ -74,4 +74,18 @@ class DashboardBackendHelper
     {
         return in_array($backend, self::getFromConfig(), true);
     }
+
+    /** @return string Inline style for hook container or empty when not hook context */
+    public static function getHookContainerStyle(bool $isHookContext): string
+    {
+        if (! $isHookContext) return '';
+        $value = (int) Config::module('vislab')->get('settings', 'hook_max_width_value', 100);
+        $unit = Config::module('vislab')->get('settings', 'hook_max_width_unit', 'percent');
+        if ($unit === 'pixel') {
+            $value = max(1, min(9999, $value));
+            return 'margin-top: 20px; max-width: ' . $value . 'px';
+        }
+        $value = max(1, min(100, $value));
+        return 'margin-top: 20px; max-width: ' . $value . '%';
+    }
 }

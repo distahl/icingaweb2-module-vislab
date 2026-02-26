@@ -11,7 +11,7 @@ use ipl\Html\ValidHtml;
 
 class ServiceDetailExtension extends ServiceDetailExtensionHook
 {
-    public function getHtmlForObject(Service $service): ValidHtml
+    public function getHtmlForObject(Service $service, bool $isHookContext = true): ValidHtml
     {
         if (!DashboardBackendHelper::isEnabled('icingadb')) {
             return Html::tag('div', ['name' => 'vislab-icingadb']);
@@ -23,6 +23,8 @@ class ServiceDetailExtension extends ServiceDetailExtensionHook
 
 
         $grapher = new GrapherHelper($hostname,$command_name,true,$perfdata,$servicename);
-        return Html::tag('div',['name'=>'vislab-icingadb'],$grapher->getHtmlForObject());
+        $attrs = ['name'=>'vislab-icingadb'];
+        if (($s = DashboardBackendHelper::getHookContainerStyle($isHookContext)) !== '') $attrs['style'] = $s;
+        return Html::tag('div',$attrs,$grapher->getHtmlForObject());
     }
 }

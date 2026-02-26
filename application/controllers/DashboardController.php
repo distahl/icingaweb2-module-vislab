@@ -65,7 +65,7 @@ class DashboardController extends CompatController
     public function indexAction()
     {
         $this->_helper->viewRenderer->setRender('dashboard/index', null, true);
-        $this->view->content = $this->grapher->getHtmlForObject($this->object);
+        $this->view->content = $this->grapher->getHtmlForObject($this->object, false);
     }
 
 }

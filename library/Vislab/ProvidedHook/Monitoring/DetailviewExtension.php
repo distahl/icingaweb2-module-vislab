@@ -11,6 +11,7 @@ use Icinga\Module\Monitoring\Object\Service;
 use Icinga\Module\Vislab\Helpers\DashboardBackendHelper;
 use Icinga\Module\Vislab\Helpers\GrapherHelper;
 use ipl\Html\Html;
+use ipl\Html\ValidHtml;
 use Throwable;
 
 
@@ -38,7 +39,7 @@ class DetailviewExtension extends DetailviewExtensionHook
     }
 
 
-    public function getHtmlForObject(MonitoredObject $object)
+    public function getHtmlForObject(MonitoredObject $object, bool $isHookContext = true): ValidHtml
     {
 
         $service = null;
@@ -52,10 +53,13 @@ class DetailviewExtension extends DetailviewExtensionHook
         $check_command = $object->check_command;
         try {
             $grapher = new GrapherHelper($host,$check_command,false,$object->perfdata,$service);
-            return Html::tag('div',['name'=>'vislab-monitoring'],$grapher->getHtmlForObject())->render();
+            $attrs = ['name'=>'vislab-monitoring'];
+            if (($s = DashboardBackendHelper::getHookContainerStyle($isHookContext)) !== '') $attrs['style'] = $s;
+            return Html::tag('div',$attrs,$grapher->getHtmlForObject());
         }catch (Throwable $exception){
             Logger::error($exception->getMessage());
             Logger::error($exception->getTraceAsString());
+            return Html::tag('div',['name'=>'vislab-monitoring']);
         }
 
 
