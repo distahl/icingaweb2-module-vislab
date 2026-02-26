@@ -174,16 +174,108 @@ class InfluxDb1Connection extends ResourceConnectionHook
             )
         );
 
+        $mappingOptions = array(
+            'servicename'   => $this->translate('Service Name'),
+            'hostname'      => $this->translate('Hostname'),
+            'check_command' => $this->translate('Check Command'),
+        );
+
+        $form->addElement(
+            'select',
+            'host_mapping_measurement',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Host): Measurement'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "measurement" on host checks. Must match your InfluxdbWriter host_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'check_command'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'host_mapping_hostname',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Host): Hostname'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "hostname" tag on host checks. Must match your InfluxdbWriter host_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'hostname'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'service_mapping_measurement',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Service): Measurement'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "measurement" on service checks. Must match your InfluxdbWriter service_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'check_command'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'service_mapping_hostname',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Service): Hostname'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "hostname" tag on service checks. Must match your InfluxdbWriter service_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'hostname'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'service_mapping_service',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Service): Service'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "service" tag on service checks. Must match your InfluxdbWriter service_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'servicename'
+            )
+        );
+
         return $form;
     }
     public function fetch( $metric, $hostname, $servicename, $check_command, $from, $to=null)
     {
         $dataset=[];
         $unit = "";
-        $where = "\"metric\" = '{$metric}' AND \"hostname\" = '$hostname' ";
+
+        $vars = [
+            'servicename'   => $servicename,
+            'hostname'      => $hostname,
+            'check_command' => $check_command,
+        ];
+
+        if ($servicename === null) {
+            $mappedMeasurement = $vars[$this->config->get('host_mapping_measurement', 'check_command')];
+            $mappedHostname    = $vars[$this->config->get('host_mapping_hostname', 'hostname')];
+        } else {
+            $mappedMeasurement = $vars[$this->config->get('service_mapping_measurement', 'check_command')];
+            $mappedHostname    = $vars[$this->config->get('service_mapping_hostname', 'hostname')];
+            $mappedService     = $vars[$this->config->get('service_mapping_service', 'servicename')];
+        }
+
+        $where = "\"metric\" = '{$metric}' AND \"hostname\" = '$mappedHostname' ";
 
         if ($servicename !== null) {
-            $where .= " AND \"service\" = '$servicename'";
+            $where .= " AND \"service\" = '$mappedService'";
         }
         $where .= " AND time >= $from ";
 
@@ -192,7 +284,7 @@ class InfluxDb1Connection extends ResourceConnectionHook
         }
 
         $result =  $this->database->getQueryBuilder()
-        ->select("value, unit")->from($check_command)->where([$where])->getResultSet()->getPoints();
+        ->select("value, unit")->from($mappedMeasurement)->where([$where])->getResultSet()->getPoints();
         if (count($result) > 0) {
             if (isset($result[0]['unit']) && $result[0]['unit'] != "") {
                 $unit = $result[0]['unit'];

@@ -121,6 +121,82 @@ class VictoriaMetricsConnection extends ResourceConnectionHook
             )
         );
 
+        $mappingOptions = array(
+            'servicename'   => $this->translate('Service Name'),
+            'hostname'      => $this->translate('Hostname'),
+            'check_command' => $this->translate('Check Command'),
+        );
+
+        $form->addElement(
+            'select',
+            'host_mapping_hostname',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Host): Hostname'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "hostname" label on host checks. Must match your InfluxdbWriter host_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'hostname'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'host_mapping_name',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Host): Measurement'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "__name__" (measurement) label on host checks. Must match your InfluxdbWriter host_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'check_command'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'service_mapping_service',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Service): Service'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "service" label on service checks. Must match your InfluxdbWriter service_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'servicename'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'service_mapping_hostname',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Service): Hostname'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "hostname" label on service checks. Must match your InfluxdbWriter service_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'hostname'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'service_mapping_name',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Service): Measurement'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "__name__" (measurement) label on service checks. Must match your InfluxdbWriter service_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'check_command'
+            )
+        );
+
         return $form;
     }
 
@@ -152,8 +228,25 @@ class VictoriaMetricsConnection extends ResourceConnectionHook
 
         $unit = "";
         $result =[];
-        $queryWithLabels = sprintf('{service="%s",db="%s",hostname="%s",metric="%s",__name__="%s_value"}'
-            ,$servicename,$this->config->database,$hostname,$metric,$check_command);
+
+        $vars = [
+            'servicename'   => $servicename,
+            'hostname'      => $hostname,
+            'check_command' => $check_command,
+        ];
+
+        if ($servicename === null) {
+            $mappedHostname = $vars[$this->config->get('host_mapping_hostname', 'hostname')];
+            $mappedName     = $vars[$this->config->get('host_mapping_name', 'check_command')];
+            $queryWithLabels = sprintf('{db="%s",hostname="%s",metric="%s",__name__="%s_value"}',
+                $this->config->database, $mappedHostname, $metric, $mappedName);
+        } else {
+            $mappedService  = $vars[$this->config->get('service_mapping_service', 'servicename')];
+            $mappedHostname = $vars[$this->config->get('service_mapping_hostname', 'hostname')];
+            $mappedName     = $vars[$this->config->get('service_mapping_name', 'check_command')];
+            $queryWithLabels = sprintf('{service="%s",db="%s",hostname="%s",metric="%s",__name__="%s_value"}',
+                $mappedService, $this->config->database, $mappedHostname, $metric, $mappedName);
+        }
 
         if($to == null){
             $to = time();

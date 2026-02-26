@@ -137,6 +137,82 @@ class InfluxDb2Connection extends ResourceConnectionHook
             )
         );
 
+        $mappingOptions = array(
+            'servicename'   => $this->translate('Service Name'),
+            'hostname'      => $this->translate('Hostname'),
+            'check_command' => $this->translate('Check Command'),
+        );
+
+        $form->addElement(
+            'select',
+            'host_mapping_measurement',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Host): Measurement'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "_measurement" on host checks. Must match your InfluxdbWriter host_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'check_command'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'host_mapping_hostname',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Host): Hostname'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "hostname" tag on host checks. Must match your InfluxdbWriter host_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'hostname'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'service_mapping_measurement',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Service): Measurement'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "_measurement" on service checks. Must match your InfluxdbWriter service_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'check_command'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'service_mapping_hostname',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Service): Hostname'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "hostname" tag on service checks. Must match your InfluxdbWriter service_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'hostname'
+            )
+        );
+
+        $form->addElement(
+            'select',
+            'service_mapping_service',
+            array(
+                'required'      => false,
+                'label'         => $this->translate('Mapping (Service): Service'),
+                'description'   => $this->translate(
+                    'Which Icinga2 variable to use for the "service" tag on service checks. Must match your InfluxdbWriter service_template.'
+                ),
+                'multiOptions'  => $mappingOptions,
+                'value'         => 'servicename'
+            )
+        );
+
         return $form;
     }
 
@@ -166,13 +242,27 @@ class InfluxDb2Connection extends ResourceConnectionHook
 
         $result=[];
 
+        $vars = [
+            'servicename'   => $servicename,
+            'hostname'      => $hostname,
+            'check_command' => $check_command,
+        ];
+
+        if ($servicename === null) {
+            $mappedMeasurement = $vars[$this->config->get('host_mapping_measurement', 'check_command')];
+            $mappedHostname    = $vars[$this->config->get('host_mapping_hostname', 'hostname')];
+        } else {
+            $mappedMeasurement = $vars[$this->config->get('service_mapping_measurement', 'check_command')];
+            $mappedHostname    = $vars[$this->config->get('service_mapping_hostname', 'hostname')];
+            $mappedService     = $vars[$this->config->get('service_mapping_service', 'servicename')];
+        }
 
         $queryString = sprintf('from(bucket: "%s")
             |> range(start: time(v: %d), stop:now())
             |> filter(fn: (r) => r["_field"] == "value")
             |> filter(fn: (r) => r["_measurement"] == "%s")
             |> filter(fn: (r) => r.metric == "%s")
-            |> filter(fn: (r) => r.hostname == "%s")', $this->config->bucket, $from, $this->escapeFluxStringLiteral($check_command), $this->escapeFluxStringLiteral($metric), $this->escapeFluxStringLiteral($hostname));
+            |> filter(fn: (r) => r.hostname == "%s")', $this->config->bucket, $from, $this->escapeFluxStringLiteral($mappedMeasurement), $this->escapeFluxStringLiteral($metric), $this->escapeFluxStringLiteral($mappedHostname));
 
 
         $unitString = sprintf('from(bucket: "%s")
@@ -180,12 +270,12 @@ class InfluxDb2Connection extends ResourceConnectionHook
             |> filter(fn: (r) => r["_field"] == "unit")
             |> filter(fn: (r) => r["_measurement"] == "%s")
             |> filter(fn: (r) => r.metric == "%s")
-            |> filter(fn: (r) => r.hostname == "%s")', $this->config->bucket, $from, $this->escapeFluxStringLiteral($check_command), $this->escapeFluxStringLiteral($metric), $this->escapeFluxStringLiteral($hostname));
+            |> filter(fn: (r) => r.hostname == "%s")', $this->config->bucket, $from, $this->escapeFluxStringLiteral($mappedMeasurement), $this->escapeFluxStringLiteral($metric), $this->escapeFluxStringLiteral($mappedHostname));
 
 
-        if ($servicename != null) {
-            $queryString .= sprintf(' |> filter(fn: (r) => r.service == "%s")', $this->escapeFluxStringLiteral($servicename));
-            $unitString .= sprintf(' |> filter(fn: (r) => r.service == "%s")', $this->escapeFluxStringLiteral($servicename));
+        if ($servicename !== null) {
+            $queryString .= sprintf(' |> filter(fn: (r) => r.service == "%s")', $this->escapeFluxStringLiteral($mappedService));
+            $unitString .= sprintf(' |> filter(fn: (r) => r.service == "%s")', $this->escapeFluxStringLiteral($mappedService));
         }
         $dataset = [];
         $unit = "";
