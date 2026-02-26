@@ -88,9 +88,10 @@ class VictoriaMetricsConnection extends ResourceConnectionHook
             'password',
             array(
                 'required'      => false,
+                'renderPassword' => true,
                 'label'         => $this->translate('Password'),
                 'description'   => $this->translate(
-                    'The password to log in on the victoriametrics instance.'
+                    'The password to log in on the victoriametrics instance. If no username is given, the password is used as token.'
                 ),
                 'autocomplete'      => 'new-password'
             )
@@ -101,7 +102,6 @@ class VictoriaMetricsConnection extends ResourceConnectionHook
             'database',
             array(
                 'required'          => true,
-                'renderPassword'    => true,
                 'label'         => $this->translate('database'),
                 'description'   => $this->translate(
                     'The database that icinga2 used to write the metric'
@@ -228,6 +228,15 @@ class VictoriaMetricsConnection extends ResourceConnectionHook
         curl_setopt($ch, CURLOPT_URL, $url . '?' . http_build_query($params));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch,CURLOPT_TIMEOUT,1);
+
+        $user = $this->config->get('user');
+        $password = $this->config->get('password');
+        if ($user !== null && $user !== '') {
+            curl_setopt($ch, CURLOPT_USERPWD, $user . ':' . $password);
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        } elseif ($password !== null && $password !== '') {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $password]);
+        }
 
         if (boolval($this->config->get('verify_tls', '1')) === false) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
