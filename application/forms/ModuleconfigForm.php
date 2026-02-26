@@ -135,9 +135,10 @@ class ModuleconfigForm extends ConfigForm
                     }
                 }
             }
-            if (isset($values['settings_dashboardbackend']) && is_array($values['settings_dashboardbackend'])) {
-                $values['settings_dashboardbackend'] = DashboardBackendHelper::serialize($values['settings_dashboardbackend']);
-            }
+        }
+
+        if (isset($values['settings_dashboardbackend']) && is_array($values['settings_dashboardbackend'])) {
+            $values['settings_dashboardbackend'] = DashboardBackendHelper::serialize($values['settings_dashboardbackend']);
         }
 
         return $values;
