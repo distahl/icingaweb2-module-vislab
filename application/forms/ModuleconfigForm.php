@@ -5,6 +5,7 @@ namespace Icinga\Module\Vislab\Forms;
 
 use Icinga\Application\Config;
 use Icinga\Forms\ConfigForm;
+use Icinga\Module\Vislab\Helpers\DashboardBackendHelper;
 
 class ModuleconfigForm extends ConfigForm
 {
@@ -33,10 +34,11 @@ class ModuleconfigForm extends ConfigForm
             'multiOptions' => $backends
         ]);
 
-        $this->addElement('select', 'settings_dashboardbackend', [
-            'label' => $this->translate('Dasboard Backend'),
+        $this->addElement('multiselect', 'settings_dashboardbackend', [
+            'label' => $this->translate('Dashboard Backend'),
+            'description' => $this->translate('Where to show the vislab dashboard and graphs. Multiple selections allowed.'),
             'required' => true,
-            'multiOptions' => ['icingadb'=>'icingadb', 'monitoring'=>'monitoring (ido)']
+            'multiOptions' => ['icingadb' => 'icingadb', 'monitoring' => 'monitoring (ido)']
         ]);
 
 
@@ -76,6 +78,11 @@ class ModuleconfigForm extends ConfigForm
                 $element->setValue(static::$dummyPassword);
             }
         }
+        $dashboardEl = $this->getElement('settings_dashboardbackend');
+        if ($dashboardEl && $this->config->hasSection('settings')) {
+            $raw = $this->config->getSection('settings')->get('dashboardbackend', DashboardBackendHelper::DEFAULT_BACKEND);
+            $dashboardEl->setValue(DashboardBackendHelper::parse($raw));
+        }
     }
 
     /**
@@ -103,6 +110,9 @@ class ModuleconfigForm extends ConfigForm
 
                     }
                 }
+            }
+            if (isset($values['settings_dashboardbackend']) && is_array($values['settings_dashboardbackend'])) {
+                $values['settings_dashboardbackend'] = DashboardBackendHelper::serialize($values['settings_dashboardbackend']);
             }
         }
 

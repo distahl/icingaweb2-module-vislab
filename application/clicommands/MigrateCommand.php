@@ -8,6 +8,7 @@ use Icinga\Application\Hook;
 use Icinga\Application\Modules\Module;
 
 use Icinga\Module\Reporting\Cli\Command;
+use Icinga\Module\Vislab\Helpers\DashboardBackendHelper;
 use Icinga\Module\Vislab\Hook\ResourceFormHook;
 
 
@@ -58,13 +59,14 @@ class MigrateCommand extends Command
         echo "Updated backend!\n";
 
         $dashboardbackend = $this->params->get('dashboardbackend', 'monitoring');
-        if($dashboardbackend !== null){
-            if($dashboardbackend != "monitoring" && $dashboardbackend != "icingadb"){
-                echo "invalid dashboardbackend, use monitoring or icingadb\n";
+        if ($dashboardbackend !== null) {
+            $parsed = DashboardBackendHelper::parse($dashboardbackend);
+            if ($parsed === []) {
+                echo "invalid dashboardbackend, use monitoring and/or icingadb (comma-separated for multiple)\n";
                 exit(3);
             }
             $data = $this->module->getConfig('config')->getSection('settings')->toArray();
-            $data['dashboardbackend'] = $dashboardbackend;
+            $data['dashboardbackend'] = DashboardBackendHelper::serialize($parsed);
             $this->module->getConfig('config')->setSection('settings',$data)->saveIni();
             echo "Updated dashboardbackend!\n";
         }

@@ -8,6 +8,7 @@ use Icinga\Module\Monitoring\Hook\DetailviewExtensionHook;
 use Icinga\Module\Monitoring\Object\MonitoredObject;
 use Icinga\Module\Monitoring\Object\Host;
 use Icinga\Module\Monitoring\Object\Service;
+use Icinga\Module\Vislab\Helpers\DashboardBackendHelper;
 use Icinga\Module\Vislab\Helpers\GrapherHelper;
 use ipl\Html\Html;
 use Throwable;
@@ -27,11 +28,13 @@ class DetailviewExtension extends DetailviewExtensionHook
 
     public function has(MonitoredObject $object)
     {
-        if (($object instanceof Host) || ($object instanceof Service)) {
-            return true;
-        } else {
+        if (!DashboardBackendHelper::isEnabled('monitoring')) {
             return false;
         }
+        if (($object instanceof Host) || ($object instanceof Service)) {
+            return true;
+        }
+        return false;
     }
 
 

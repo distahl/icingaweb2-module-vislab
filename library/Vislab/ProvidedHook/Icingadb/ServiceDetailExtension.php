@@ -4,9 +4,8 @@ namespace Icinga\Module\Vislab\ProvidedHook\Icingadb;
 
 use Icinga\Module\Icingadb\Hook\ServiceDetailExtensionHook;
 use Icinga\Module\Icingadb\Model\Service;
-
+use Icinga\Module\Vislab\Helpers\DashboardBackendHelper;
 use Icinga\Module\Vislab\Helpers\GrapherHelper;
-
 use ipl\Html\Html;
 use ipl\Html\ValidHtml;
 
@@ -14,6 +13,9 @@ class ServiceDetailExtension extends ServiceDetailExtensionHook
 {
     public function getHtmlForObject(Service $service): ValidHtml
     {
+        if (!DashboardBackendHelper::isEnabled('icingadb')) {
+            return Html::tag('div', ['name' => 'vislab-icingadb']);
+        }
         $hostname = $service->host->name;
         $servicename = $service->name;
         $perfdata = $service->state->performance_data;
