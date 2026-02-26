@@ -67,7 +67,8 @@ class InfluxDb1Connection extends ResourceConnectionHook
      */
     protected function connect()
     {
-        $this->client = new Client( $this->config->host,  $this->config->port,  $this->config->user,  $this->config->password);
+        $this->client = new Client($this->config->host, $this->config->port, $this->config->user, $this->config->password,
+            boolval($this->config->get('ssl', '0')), boolval($this->config->get('verify_tls', '1')));
         $this->database = $this->client->selectDB($this->config->database);
     }
 
@@ -146,6 +147,30 @@ class InfluxDb1Connection extends ResourceConnectionHook
                 'description'   => $this->translate(
                     'The Database to use'
                 )
+            )
+        );
+
+        $form->addElement(
+            'checkbox',
+            'ssl',
+            array(
+                'label'         => $this->translate('Use HTTPS'),
+                'description'   => $this->translate(
+                    'Connect to the InfluxDB instance via HTTPS instead of HTTP.'
+                ),
+                'value'         => '0'
+            )
+        );
+
+        $form->addElement(
+            'checkbox',
+            'verify_tls',
+            array(
+                'label'         => $this->translate('Verify TLS Certificate'),
+                'description'   => $this->translate(
+                    'When using HTTPS, verify the server TLS certificate. Disable for self-signed or internal certificates.'
+                ),
+                'value'         => '1'
             )
         );
 

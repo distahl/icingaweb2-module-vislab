@@ -125,6 +125,18 @@ class InfluxDb2Connection extends ResourceConnectionHook
             )
         );
 
+        $form->addElement(
+            'checkbox',
+            'verify_tls',
+            array(
+                'label'         => $this->translate('Verify TLS Certificate'),
+                'description'   => $this->translate(
+                    'When using HTTPS, verify the server TLS certificate. Disable for self-signed or internal certificates.'
+                ),
+                'value'         => '1'
+            )
+        );
+
         return $form;
     }
 
@@ -140,6 +152,7 @@ class InfluxDb2Connection extends ResourceConnectionHook
             "token" => $this->config->token,
             "bucket" => $this->config->bucket,
             "org" => $this->config->organization,
+            "verifySSL" => boolval($this->config->get('verify_tls', '1')),
         ]);
         $this->queryApi = $client->createQueryApi();
     }

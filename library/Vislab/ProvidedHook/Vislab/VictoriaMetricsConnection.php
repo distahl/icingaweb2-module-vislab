@@ -109,6 +109,18 @@ class VictoriaMetricsConnection extends ResourceConnectionHook
             )
         );
 
+        $form->addElement(
+            'checkbox',
+            'verify_tls',
+            array(
+                'label'         => $this->translate('Verify TLS Certificate'),
+                'description'   => $this->translate(
+                    'When using HTTPS, verify the server TLS certificate. Disable for self-signed or internal certificates.'
+                ),
+                'value'         => '1'
+            )
+        );
+
         return $form;
     }
 
@@ -216,6 +228,11 @@ class VictoriaMetricsConnection extends ResourceConnectionHook
         curl_setopt($ch, CURLOPT_URL, $url . '?' . http_build_query($params));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch,CURLOPT_TIMEOUT,1);
+
+        if (boolval($this->config->get('verify_tls', '1')) === false) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        }
 
         // Execute the request
         $response = curl_exec($ch);
